@@ -87,6 +87,7 @@ async def stop_container(interaction: discord.Interaction, container_name: str):
 
 
 # In the case that the above slash commands are not working, here is a fallback method.
+# This seems to happen with a docker compose setup running for more than 24 hours.
 @discordClient.event
 async def on_message(message):
     if message.author == discordClient.user or message.author.id != ADMIN:
