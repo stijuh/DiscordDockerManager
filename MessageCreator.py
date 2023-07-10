@@ -6,7 +6,7 @@ from common import APP_VERSION
 
 
 class MessageCreator:
-    def __init__(self, message: discord.Message=None, interaction:discord.Interaction=None):
+    def __init__(self, message: discord.Message = None, interaction: discord.Interaction = None):
         self.message = None
         self.interaction = None
 
