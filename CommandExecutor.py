@@ -77,16 +77,16 @@ class CommandExecutor:
     async def restart_container(self, container_name: str):
         await self.raise_if_manager(container_name)
 
+        await self.messageCreator.sendSimpleMessage(f"Restarting container: `{container_name}`")
         containerToRestart = self.dockerClient.containers.get(container_name)
         containerToRestart.restart()
-        await self.messageCreator.sendSimpleMessage(f"Restarting container: `{container_name}`")
 
     async def stop_container(self, container_name: str):
         await self.raise_if_manager(container_name)
 
+        await self.messageCreator.sendSimpleMessage(f"Stopping container: `{container_name}`")
         containerToRestart = self.dockerClient.containers.get(container_name)
         containerToRestart.stop()
-        await self.messageCreator.sendSimpleMessage(f"Stopping container: `{container_name}`")
 
     async def raise_if_manager(self, container_name):
         if container_name == "docker-manager-discord":
