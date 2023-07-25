@@ -12,8 +12,11 @@ from common import APP_VERSION, BOT_MENTION_ID
 
 # Initialize environment.
 load_dotenv()
+
 TOKEN = os.getenv('DISCORD_TOKEN')
-ADMIN = int(os.getenv('ADMIN_ID'))
+
+adminList = str(os.getenv('ADMINS'))
+ADMINS = adminList.split(",")
 
 # Set intents (permissions).
 intents = discord.Intents.default()
@@ -30,7 +33,7 @@ logger.info('INFO: initializing DockerManagerBot')
 
 
 def check_if_allowed(userId):
-    if userId != ADMIN:
+    if userId not in ADMINS:
         logger.info("[INFO] Container overview command called by non-admin.")
         raise Exception(f"Nuh-uh: {userId}")
 
@@ -84,30 +87,5 @@ async def stop_container(interaction: discord.Interaction, container_name: str):
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Stopping container.")
     await executor.stop_container(container_name)
-
-
-# In the case that the above slash commands are not working, here is a fallback method.
-# This seems to happen with a docker compose setup running for more than 24 hours.
-@discordClient.event
-async def on_message(message):
-    if message.author == discordClient.user or message.author.id != ADMIN:
-        return
-
-    if not message.content.startswith(BOT_MENTION_ID):
-        return
-
-    executor = CommandExecutor(dockerClient, message=message)
-    command = str(message.content).replace(BOT_MENTION_ID, "").strip().split(" ")
-
-    match command[0]:
-        case "help":
-            await executor.get_help()
-        case "containers":
-            await executor.get_containers()
-        case "restart":
-            await executor.restart_container(command[1])
-        case "stop":
-            await executor.stop_container(command[1])
-
 
 discordClient.run(TOKEN)
