@@ -57,9 +57,9 @@ class CommandExecutor:
             containerInfo = {
                 "name": container.name,
                 "info": {
-                    "status": container.status,
-                    "started": container.attrs.get("State")["StartedAt"][:10],
-                    "running_for": parseAndGetFormattedTimeDifference(container.attrs.get("State")["StartedAt"])
+                    "Status": container.status,
+                    "Started": container.attrs.get("State")["StartedAt"][:10],
+                    "Running for": parseAndGetFormattedTimeDifference(container.attrs.get("State")["StartedAt"])
                 }
             }
 
@@ -88,5 +88,5 @@ class CommandExecutor:
 
     async def raise_if_manager(self, container_name):
         if container_name == "docker-manager-discord":
-            await self.messageCreator.sendSimpleMessage("Nuh-uh! You cannot kill me, mortal")
-            raise Exception("Nuh-uh! i stay online forever.")
+            await self.messageCreator.sendSimpleMessage("You cannot kill me, mortal")
+            raise Exception("Nope, I stay online forever.")
