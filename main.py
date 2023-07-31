@@ -6,9 +6,9 @@ import docker
 from discord import app_commands
 from dotenv import load_dotenv
 
-from CommandExecutor import CommandExecutor
-from DockerManagerClient import DockerManagerClient
-from common import APP_VERSION, BOT_MENTION_ID
+from Entities.CommandExecutor import CommandExecutor
+from Entities.DockerManagerClient import DockerManagerClient
+from Common.contants import APP_VERSION
 
 # Initialize environment.
 load_dotenv()
@@ -32,7 +32,8 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger.info('INFO: initializing DockerManagerBot')
 
 
-def check_if_allowed(userId):
+def check_if_allowed(userId: str):
+    userId = str(userId)
     if userId not in ADMINS:
         logger.info("[INFO] Container overview command called by non-admin.")
         raise Exception(f"Nuh-uh: {userId}")

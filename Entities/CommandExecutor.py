@@ -1,7 +1,8 @@
 import discord
 import docker
 
-from MessageCreator import MessageCreator
+from Common.methods import parseAndGetFormattedTimeDifference
+from Entities.MessageCreator import MessageCreator
 
 
 class CommandExecutor:
@@ -18,29 +19,25 @@ class CommandExecutor:
             {
                 "name": "Help",
                 "info": {
-                    "slash:": "/help",
-                    "text:": "help"
+                    "slash:": "/help"
                 }
             },
             {
                 "name": "Get all containers",
                 "info": {
-                    "slash:": "/containers",
-                    "text:": "containers"
+                    "slash:": "/containers"
                 }
             },
             {
                 "name": "Restart container",
                 "info": {
-                    "slash:": "/restart_container",
-                    "text:": "restart <name>"
+                    "slash:": "/restart_container"
                 }
             },
             {
                 "name": "Stop container",
                 "info": {
-                    "slash:": "/stop_container",
-                    "text:": "stop <name>"
+                    "slash:": "/stop_container"
                 }
             }
         ]
@@ -61,7 +58,8 @@ class CommandExecutor:
                 "name": container.name,
                 "info": {
                     "status": container.status,
-                    "started": container.attrs.get("State")["StartedAt"][:10]
+                    "started": container.attrs.get("State")["StartedAt"][:10],
+                    "running_for": parseAndGetFormattedTimeDifference(container.attrs.get("State")["StartedAt"])
                 }
             }
 

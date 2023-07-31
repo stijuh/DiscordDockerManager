@@ -2,7 +2,7 @@ import json
 
 import discord
 
-from common import APP_VERSION
+from Common.contants import APP_VERSION
 
 
 class MessageCreator:
@@ -33,7 +33,7 @@ class MessageCreator:
         listEmbed.description = description
 
         for item in items:
-            jsonString = json.dumps(item["info"])
+            jsonString = json.dumps(item["info"], indent=1)
             formatted = jsonString.lstrip('{').rstrip('}')
 
             listEmbed.add_field(name=item["name"], value=f'```json\n{formatted}\n```', inline=inline)
