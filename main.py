@@ -14,7 +14,6 @@ from Common.contants import APP_VERSION
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-
 adminList = str(os.getenv('ADMINS'))
 ADMINS = adminList.split(",")
 
@@ -32,7 +31,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger.info('INFO: initializing DockerManagerBot')
 
 
-def check_if_allowed(userId: str):
+def check_if_allowed(userId):
     userId = str(userId)
     if userId not in ADMINS:
         logger.info("[INFO] Container overview command called by non-admin.")
