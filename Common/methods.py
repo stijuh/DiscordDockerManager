@@ -1,11 +1,19 @@
+import logging
 from datetime import datetime
+
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def parseAndGetFormattedTimeDifference(unformattedDate: str):
-    formattedDate = unformattedDate[:-9].replace("T", " ")
-    startDatetime = datetime.strptime(formattedDate, "%Y-%m-%d %H:%M:%S")
+    formattedDate = unformattedDate.split(".")[0].replace("T", " ")
 
-    return getFormattedTimeDifference(datetime.now(), startDatetime)
+    try:
+        startDatetime = datetime.strptime(formattedDate, "%Y-%m-%d %H:%M:%S")
+        return getFormattedTimeDifference(datetime.now(), startDatetime)
+    except ValueError:
+        logger.error(f"ValueError during parsing of dates. Unformatted date: {unformattedDate}, formatted: {formattedDate}")
+        raise ValueError
 
 
 def getFormattedTimeDifference(firstDate: datetime, secondDate: datetime):
