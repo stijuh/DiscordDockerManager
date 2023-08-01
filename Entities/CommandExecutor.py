@@ -3,6 +3,7 @@ import docker
 
 from Common.methods import parseAndGetFormattedTimeDifference
 from Entities.MessageCreator import MessageCreator
+from Entities.Pagination import Pagination
 
 
 class CommandExecutor:
@@ -65,11 +66,11 @@ class CommandExecutor:
 
             containerInfoList.append(containerInfo)
 
-        await self.messageCreator.sendEmbedWithNameAndObjectInfo(
+        paginator = Pagination(interaction=self.interaction)
+        await paginator.send_paginated_object_info(
             title="Containers",
             description="To manage a specific container, use the container's name.",
             items=containerInfoList,
-            inline=False
         )
 
     async def restart_container(self, container_name: str):
