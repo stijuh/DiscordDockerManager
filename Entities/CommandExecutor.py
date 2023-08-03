@@ -1,6 +1,7 @@
 import discord
 import docker
 import requests
+from docker.models.containers import Container
 
 from Common.methods import parseAndGetFormattedTimeDifference
 from Entities.MessageCreator import MessageCreator
@@ -65,7 +66,7 @@ class CommandExecutor:
         await self.raise_if_manager(container_name)
 
         try:
-            containerToRestart = self.dockerClient.containers.get(container_name)
+            containerToRestart: Container = self.dockerClient.containers.get(container_name)
             await self.messageCreator.sendSimpleMessage(f"Restarting container: `{container_name}`")
             containerToRestart.restart()
         except requests.exceptions.HTTPError:

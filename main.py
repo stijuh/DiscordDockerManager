@@ -4,38 +4,47 @@ import os
 import discord
 import docker
 from discord import app_commands
+from docker.errors import DockerException
 from dotenv import load_dotenv
 
 from Entities.CommandExecutor import CommandExecutor
 from Entities.DockerManagerClient import DockerManagerClient
 from Common.contants import APP_VERSION
 
-# Initialize environment.
-load_dotenv()
+# Initialize logging.
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger.info('[INFO] initializing DockerManagerBot')
 
+# Initialize environment.
+logger.info('[INFO] Updating environment variables')
+load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 adminList = str(os.getenv('ADMINS'))
 ADMINS = adminList.split(",")
 
 # Set intents (permissions).
+logger.info('[INFO] Setting discord intents (permissions)')
 intents = discord.Intents.default()
 intents.message_content = True
 discordClient = DockerManagerClient(intents=intents)
 
 # Initialize Docker Engine.
-dockerClient = docker.from_env()
-
-# Initialize logging.
-logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger.info('INFO: initializing DockerManagerBot')
+logger.info('[INFO] Trying to get the docker client from the environment..')
+dockerClient = None
+try:
+    dockerClient = docker.from_env()
+except DockerException:
+    logger.error('[ERROR] Could not connect to docker. \nMake sure that docker is running, and this app is running '
+                 'in the same environment.')
+    exit("Exiting application.")
 
 
 def check_if_allowed(userId):
     userId = str(userId)
     if userId not in ADMINS:
-        logger.info("[INFO] Container overview command called by non-admin.")
-        raise Exception(f"Nuh-uh: {userId}")
+        logger.warning("[INFO] Container overview command called by non-admin.")
+        raise Exception(f"Nuh-uh: user {userId} is not a registereds admin.")
 
 
 @discordClient.event
