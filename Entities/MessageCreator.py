@@ -17,7 +17,9 @@ class MessageCreator:
         else:
             raise Exception("please provide either a message or an interaction.")
 
-    async def sendSimpleMessage(self, text):
+    async def sendSimpleMessage(self, text, followup=False):
+        if followup:
+            await self.interaction.followup.send(text, ephemeral=True)
         if self.message is not None:
             await self.message.channel.send(text)
         elif self.interaction is not None:

@@ -56,24 +56,26 @@ async def help(interaction: discord.Interaction):
 
 
 @discordClient.tree.command()
-async def containers(interaction: discord.Interaction):
-    """Overview of all containers."""
+@app_commands.rename(container_filter='container-name')
+@app_commands.describe(container_filter='Leave empty to get all containers')
+async def containers(interaction: discord.Interaction, container_filter: str = ""):
+    """Overview of all containers. Use the filter to look for specific containers"""
     check_if_allowed(interaction.user.id)
 
     logger.info("[INFO] Executing container overview command.")
     executor = CommandExecutor(dockerClient, interaction=interaction)
-    await executor.get_containers()
+    await executor.get_and_send_containers(container_filter)
 
 
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
-@app_commands.describe(container_name='The name of the container to restart')
+@app_commands.describe(container_name='The name of the container to restart, or to search for containers')
 async def restart_container(interaction: discord.Interaction, container_name: str):
     """Overview of all containers."""
     check_if_allowed(interaction.user.id)
 
     executor = CommandExecutor(dockerClient, interaction=interaction)
-    logger.info("[INFO] Restarting container.")
+    logger.info("[INFO] Executing restart container command.")
     await executor.restart_container(container_name)
 
 
@@ -85,7 +87,7 @@ async def stop_container(interaction: discord.Interaction, container_name: str):
     check_if_allowed(interaction.user.id)
 
     executor = CommandExecutor(dockerClient, interaction=interaction)
-    logger.info("[INFO] Stopping container.")
+    logger.info("[INFO] Executing stop container command.")
     await executor.stop_container(container_name)
 
 discordClient.run(TOKEN)

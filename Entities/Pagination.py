@@ -9,7 +9,7 @@ from Common.contants import APP_VERSION
 
 class Pagination:
     def __init__(self, interaction: discord.Interaction):
-        self.interaction = interaction
+        self.interaction: discord.Interaction = interaction
         self.pages = []
         self.currentPage = 0
 
@@ -36,7 +36,9 @@ class Pagination:
         if len(items) % 4 != 0:
             self.pages.append(page)
 
-        await self.interaction.response.send_message(embed=self.pages[self.currentPage], view=self.getView(self.currentPage), ephemeral=True)
+        await self.interaction.response.send_message(embed=self.pages[self.currentPage],
+                                                     view=self.getView(self.currentPage),
+                                                     ephemeral=True)
 
     def getView(self, pagePosition):
         buttons = [
