@@ -31,20 +31,15 @@ discordClient = DockerManagerClient(intents=intents)
 
 # Initialize Docker Engine.
 logger.info('[INFO] Trying to get the docker client from the environment..')
+
 dockerClient = None
 try:
     dockerClient = docker.from_env()
 except DockerException:
-    logger.error('[ERROR] Could not connect to docker. \nMake sure that docker is running, and this app is running '
-                 'in the same environment.')
+    logger.error('__________________________________________________________________________\n'
+                 '[ERROR] Could not connect to docker. \n'
+                 'Make sure that docker is running, and this app is running in the same environment.')
     exit("Exiting application.")
-
-
-def check_if_allowed(userId):
-    userId = str(userId)
-    if userId not in ADMINS:
-        logger.warning("[INFO] Container overview command called by non-admin.")
-        raise Exception(f"Nuh-uh: user {userId} is not a registereds admin.")
 
 
 @discordClient.event
@@ -56,7 +51,6 @@ async def on_ready():
 @discordClient.tree.command()
 async def help(interaction: discord.Interaction):
     """Overview of all possible commands"""
-
     check_if_allowed(interaction.user.id)
 
     logger.info("[INFO] Executing help command.")
@@ -78,9 +72,9 @@ async def containers(interaction: discord.Interaction, container_filter: str = "
 
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
-@app_commands.describe(container_name='The name of the container to restart, or to search for containers')
+@app_commands.describe(container_name='The name of the container to restart')
 async def restart_container(interaction: discord.Interaction, container_name: str):
-    """Overview of all containers."""
+    """Restart a container."""
     check_if_allowed(interaction.user.id)
 
     executor = CommandExecutor(dockerClient, interaction=interaction)
@@ -92,11 +86,45 @@ async def restart_container(interaction: discord.Interaction, container_name: st
 @app_commands.rename(container_name='container-name')
 @app_commands.describe(container_name='The name of the container to stop')
 async def stop_container(interaction: discord.Interaction, container_name: str):
-    """Overview of all containers."""
+    """Stop a container."""
     check_if_allowed(interaction.user.id)
 
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing stop container command.")
     await executor.stop_container(container_name)
+
+
+@discordClient.tree.command()
+@app_commands.rename(old_name='old-name')
+@app_commands.describe(old_name='The name of the container to rename')
+@app_commands.rename(new_name='new-name')
+@app_commands.describe(new_name='The new name of the container')
+async def rename_container(interaction: discord.Interaction, old_name: str, new_name: str):
+    """Rename a container."""
+    check_if_allowed(interaction.user.id)
+
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing rename container command.")
+    await executor.rename_container(old_name, new_name)
+
+
+@discordClient.tree.command()
+@app_commands.rename(container_name='container-name')
+@app_commands.describe(container_name='The name of the container to get the logs from')
+async def logs(interaction: discord.Interaction, container_name: str):
+    """Retrieve the recent logs a container."""
+    check_if_allowed(interaction.user.id)
+
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing restart container command.")
+    await executor.retrieve_logs_from_container(container_name)
+
+
+def check_if_allowed(userId):
+    userId = str(userId)
+    if userId not in ADMINS:
+        logger.warning("[INFO] Container overview command called by non-admin.")
+        raise Exception(f"Nuh-uh: user {userId} is not a registereds admin.")
+
 
 discordClient.run(TOKEN)

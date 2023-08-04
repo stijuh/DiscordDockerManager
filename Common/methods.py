@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime
 
 logger = logging.getLogger()
@@ -12,7 +13,8 @@ def parseAndGetFormattedTimeDifference(unformattedDate: str):
         startDatetime = datetime.strptime(formattedDate, "%Y-%m-%d %H:%M:%S")
         return getFormattedTimeDifference(datetime.now(), startDatetime)
     except ValueError:
-        logger.error(f"ValueError during parsing of dates. Unformatted date: {unformattedDate}, formatted: {formattedDate}")
+        logger.error(
+            f"ValueError during parsing of dates. Unformatted date: {unformattedDate}, formatted: {formattedDate}")
         raise ValueError
 
 
@@ -31,3 +33,22 @@ def getFormattedTimeDifference(firstDate: datetime, secondDate: datetime):
 
 def formatAmount(base: str, amount: int):
     return f"{amount} {base}{'s' if amount != 1 else ''}"
+
+
+def strip_ansi_escape_codes(text):
+    ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
+
+def parse_tracebacks(logs):
+    traceback_pattern = r"Traceback \(most recent call last\):(.*?)^\S*\s*(.+)\n"
+    traceback_matches = re.findall(traceback_pattern, logs, re.DOTALL | re.MULTILINE)
+
+    formatted_tracebacks = []
+    for match in traceback_matches:
+        exception_trace = match[0].strip()
+        error_message = match[1].strip()
+        formatted_traceback = f"{exception_trace}\n{error_message}"
+        formatted_tracebacks.append(formatted_traceback)
+
+    return formatted_tracebacks

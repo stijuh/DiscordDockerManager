@@ -17,13 +17,13 @@ class MessageCreator:
         else:
             raise Exception("please provide either a message or an interaction.")
 
-    async def sendSimpleMessage(self, text, followup=False):
+    async def sendSimpleMessage(self, text, file: discord.File = None, followup=False):
         if followup:
             await self.interaction.followup.send(text, ephemeral=True)
         if self.message is not None:
-            await self.message.channel.send(text)
+            await self.message.channel.send(text, file=file)
         elif self.interaction is not None:
-            await self.interaction.response.send_message(text, ephemeral=True)
+            await self.interaction.response.send_message(text, file=file, ephemeral=True)
 
     async def sendEmbedWithNameAndObjectInfo(self, title, items, description="", inline=True):
         """
@@ -35,10 +35,10 @@ class MessageCreator:
         listEmbed.description = description
 
         for item in items:
-            jsonString = json.dumps(item["info"], indent=1)
+            jsonString = json.dumps(item["Info"], indent=1)
             formatted = jsonString.lstrip('{').rstrip('}')
 
-            listEmbed.add_field(name=item["name"], value=f'```json\n{formatted}\n```', inline=inline)
+            listEmbed.add_field(name=item["Name"], value=f'```json\n{formatted}\n```', inline=inline)
 
         if self.message is not None:
             await self.message.channel.send(embed=listEmbed)

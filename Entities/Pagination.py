@@ -13,7 +13,7 @@ class Pagination:
         self.pages = []
         self.currentPage = 0
 
-    async def send_paginated_object_info(self, title, items, description=""):
+    async def send_paginated_object_info(self, title, items, description="", items_per_page: int = 4):
         page = get_standard_embed()
         page.title = title
         page.description = description
@@ -21,10 +21,10 @@ class Pagination:
         for index, item in enumerate(items, 0):
             page: discord.Embed
 
-            if index > 0 and index % 4 == 0:
+            if index > 0 and index % items_per_page == 0:
                 self.pages.append(page)
                 page = get_standard_embed()
-                page.title = title + f" | page {math.ceil(index / 4)}"
+                page.title = title + f" | page {math.ceil(index / items_per_page)}"
                 page.description = description
 
             jsonString = json.dumps(item["info"], indent=1)
@@ -33,7 +33,7 @@ class Pagination:
             page.add_field(name=item["name"], value=f'```json\n{formatted}\n```', inline=False)
 
         # If there's a not fully page left, add it too
-        if len(items) % 4 != 0:
+        if len(items) % items_per_page != 0:
             self.pages.append(page)
 
         await self.interaction.response.send_message(embed=self.pages[self.currentPage],
