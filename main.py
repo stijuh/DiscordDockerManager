@@ -112,7 +112,7 @@ async def rename_container(interaction: discord.Interaction, old_name: str, new_
 @app_commands.rename(container_name='container-name')
 @app_commands.describe(container_name='The name of the container to get the logs from')
 async def logs(interaction: discord.Interaction, container_name: str):
-    """Retrieve the recent logs a container."""
+    """Retrieve the recent logs of a container."""
     check_if_allowed(interaction.user.id)
 
     executor = CommandExecutor(dockerClient, interaction=interaction)
