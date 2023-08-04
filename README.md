@@ -39,3 +39,8 @@ So, as you can see this is all fairly easy to perform by using direct docker com
 Why did I create this then? I am running most of my (docker container) services on my Raspberry Pi, and I don't 
 want to open up a port to the internet. I still want to manage my services however, so what better way to do that then
 using a discord bot? Shhh. There is no better way. This is it.
+
+___
+### Limitations
+Currently, this bot is only useful for managing _already existing_ containers. It might be expanded in the future to 
+also be able to create new containers or update them.

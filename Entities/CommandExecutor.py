@@ -1,8 +1,10 @@
 import os
 
 import discord
-import docker
 import requests
+
+import docker
+from docker.errors import NotFound
 from docker.models.containers import Container
 
 from Common.methods import parseAndGetFormattedTimeDifference, strip_ansi_escape_codes
@@ -124,7 +126,7 @@ class CommandExecutor:
             await self.messageCreator.send_simple_message(f"Here are the logs of container **{containerInfo.name}**:",
                                                           file=discord.File(tempFileName))
             os.remove(tempFileName)
-        except requests.exceptions.HTTPError:
+        except NotFound:
             await self.__send_other_possible_containers(container_name)
 
     # Private methods
