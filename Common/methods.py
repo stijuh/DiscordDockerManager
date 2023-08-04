@@ -11,10 +11,10 @@ def parseAndGetFormattedTimeDifference(unformattedDate: str):
 
     try:
         startDatetime = datetime.strptime(formattedDate, "%Y-%m-%d %H:%M:%S")
-        return getFormattedTimeDifference(datetime.now(), startDatetime)
+        return getFormattedTimeDifference(datetime.utcnow(), startDatetime)
     except ValueError:
-        logger.error(
-            f"ValueError during parsing of dates. Unformatted date: {unformattedDate}, formatted: {formattedDate}")
+        logger.error(f"ValueError during parsing of dates. "
+                     f"Unformatted date: {unformattedDate}, formatted: {formattedDate}")
         raise ValueError
 
 

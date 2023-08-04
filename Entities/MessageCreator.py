@@ -1,8 +1,7 @@
-import json
-
 import discord
 
 from Common.contants import APP_VERSION
+from Entities.Paginator import Paginator
 
 
 class MessageCreator:
@@ -17,33 +16,31 @@ class MessageCreator:
         else:
             raise Exception("please provide either a message or an interaction.")
 
-    async def sendSimpleMessage(self, text, file: discord.File = None, followup=False):
+        self.paginator = Paginator(interaction=self.interaction)
+
+    async def send_simple_message(self, text, file: discord.File = None, followup=False):
         if followup:
             await self.interaction.followup.send(text, ephemeral=True)
         if self.message is not None:
             await self.message.channel.send(text, file=file)
         elif self.interaction is not None:
-            await self.interaction.response.send_message(text, file=file, ephemeral=True)
+            if file is not None:
+                await self.interaction.response.send_message(text, file=file, ephemeral=True)
+            else:
+                await self.interaction.response.send_message(text, ephemeral=True)
 
-    async def sendEmbedWithNameAndObjectInfo(self, title, items, description="", inline=True):
+    async def send_embed_with_object_info(self, title, items, description="", items_per_page: int = 4, inline=False):
         """
-        Expects a list of objects in the form of {"name": "name-here", info: {object info}}.
+        Expects a list of objects in the form of {"Name": "Object name", Info: {object info}}.
         """
 
-        listEmbed = get_standard_embed()
-        listEmbed.title = title
-        listEmbed.description = description
-
-        for item in items:
-            jsonString = json.dumps(item["Info"], indent=1)
-            formatted = jsonString.lstrip('{').rstrip('}')
-
-            listEmbed.add_field(name=item["Name"], value=f'```json\n{formatted}\n```', inline=inline)
-
-        if self.message is not None:
-            await self.message.channel.send(embed=listEmbed)
-        else:
-            await self.interaction.response.send_message(embed=listEmbed, ephemeral=True)
+        await self.paginator.send_paginated_object_info(
+            title=title,
+            description=description,
+            items=items,
+            items_per_page=items_per_page,
+            inline=inline
+        )
 
 
 def get_standard_embed():

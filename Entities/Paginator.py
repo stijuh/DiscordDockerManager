@@ -7,13 +7,14 @@ from discord.ui import View, Button
 from Common.contants import APP_VERSION
 
 
-class Pagination:
+class Paginator:
+    """Only works with interactions."""
     def __init__(self, interaction: discord.Interaction):
         self.interaction: discord.Interaction = interaction
         self.pages = []
         self.currentPage = 0
 
-    async def send_paginated_object_info(self, title, items, description="", items_per_page: int = 4):
+    async def send_paginated_object_info(self, title, items, description="", items_per_page: int = 4, inline=False):
         page = get_standard_embed()
         page.title = title
         page.description = description
@@ -27,10 +28,10 @@ class Pagination:
                 page.title = title + f" | page {math.ceil(index / items_per_page)}"
                 page.description = description
 
-            jsonString = json.dumps(item["info"], indent=1)
+            jsonString = json.dumps(item["Info"], indent=1)
             formatted = jsonString.lstrip('{').rstrip('}')
 
-            page.add_field(name=item["name"], value=f'```json\n{formatted}\n```', inline=False)
+            page.add_field(name=item["Name"], value=f'```json\n{formatted}\n```', inline=inline)
 
         # If there's a not fully page left, add it too
         if len(items) % items_per_page != 0:
