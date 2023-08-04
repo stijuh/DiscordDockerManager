@@ -7,18 +7,19 @@ import docker
 from docker.errors import NotFound
 from docker.models.containers import Container
 
-from Common.methods import parseAndGetFormattedTimeDifference, strip_ansi_escape_codes
+from Common.contants import APP_NAME
+from Common.utils import parseAndGetFormattedTimeDifference, strip_ansi_escape_codes
 from Entities.MessageCreator import MessageCreator
 
 
 class CommandExecutor:
     def __init__(self, dockerClient: docker.DockerClient, message: discord.Message = None,
                  interaction: discord.Interaction = None):
-        self.dockerClient = dockerClient
+        self.docker_client = dockerClient
         self.message = message
         self.interaction = interaction
 
-        self.messageCreator = MessageCreator(message=message, interaction=interaction)
+        self.message_creator = MessageCreator(message=message, interaction=interaction)
 
     async def get_help(self):
         listOfCommands = [
@@ -67,7 +68,7 @@ class CommandExecutor:
             }
         ]
 
-        await self.messageCreator.send_embed_with_object_info(
+        await self.message_creator.send_embed_with_object_info(
             title="Help menu",
             description="Overview of all possible commands.",
             items=listOfCommands,
@@ -75,20 +76,24 @@ class CommandExecutor:
         )
 
     async def get_and_send_containers(self, filter_name: str = ""):
-        containers = await self.__get_containers(filter_name)
+        containers = await self.__get_containers_formatted(filter_name)
 
-        await self.messageCreator.send_embed_with_object_info(
-            title="Containers",
-            description="To manage a specific container, use the container's name.",
-            items=containers,
-        )
+        if len(containers) == 0 or (len(containers) == 1 and containers[0]["Name"] == APP_NAME):
+            await self.message_creator.send_simple_message("There are currently no other containers found! Start one, "
+                                                          "and run the command again.")
+        else:
+            await self.message_creator.send_embed_with_object_info(
+                title="Containers",
+                description="To manage a specific container, use the container's name.",
+                items=containers,
+            )
 
     async def restart_container(self, container_name: str):
         await self.__raise_if_manager(container_name)
 
         try:
-            containerInfo: Container = self.dockerClient.containers.get(container_name)
-            await self.messageCreator.send_simple_message(f"Restarting container: `{container_name}`")
+            containerInfo: Container = self.docker_client.containers.get(container_name)
+            await self.message_creator.send_simple_message(f"Restarting container: `{container_name}`")
             containerInfo.restart()
         except requests.exceptions.HTTPError:
             await self.__send_other_possible_containers(container_name)
@@ -97,24 +102,26 @@ class CommandExecutor:
         await self.__raise_if_manager(container_name)
 
         try:
-            containerInfo: Container = self.dockerClient.containers.get(container_name)
-            await self.messageCreator.send_simple_message(f"Stopping container: `{container_name}`")
+            containerInfo: Container = self.docker_client.containers.get(container_name)
+            await self.message_creator.send_simple_message(f"Stopping container: `{container_name}`")
             containerInfo.stop()
         except requests.exceptions.HTTPError:
             await self.__send_other_possible_containers(container_name)
 
     async def rename_container(self, old_container_name: str, new_container_name):
+        await self.__raise_if_manager(old_container_name)
+
         try:
-            containerInfo: Container = self.dockerClient.containers.get(old_container_name)
-            await self.messageCreator.send_simple_message(f"Renaming container: `{old_container_name}` "
-                                                        f"to {new_container_name}")
+            containerInfo: Container = self.docker_client.containers.get(old_container_name)
+            await self.message_creator.send_simple_message(f"Renaming container: `{old_container_name}` "
+                                                          f"to `{new_container_name}`")
             containerInfo.rename(new_container_name)
         except requests.exceptions.HTTPError:
             await self.__send_other_possible_containers(old_container_name)
 
     async def retrieve_logs_from_container(self, container_name):
         try:
-            containerInfo: Container = self.dockerClient.containers.get(container_name)
+            containerInfo: Container = self.docker_client.containers.get(container_name)
 
             decoded_logs = containerInfo.logs().decode()
             logs_without_ansi = strip_ansi_escape_codes(decoded_logs)
@@ -123,15 +130,25 @@ class CommandExecutor:
             with open(tempFileName, 'w') as f:
                 f.write(logs_without_ansi)
 
-            await self.messageCreator.send_simple_message(f"Here are the logs of container **{containerInfo.name}**:",
-                                                          file=discord.File(tempFileName))
+            await self.message_creator.send_simple_message(f"Here are the logs of container **{containerInfo.name}**:",
+                                                           file=discord.File(tempFileName))
             os.remove(tempFileName)
         except NotFound:
             await self.__send_other_possible_containers(container_name)
 
+    async def remove_container(self, container_name):
+        await self.__raise_if_manager(container_name)
+
+        try:
+            containerInfo: Container = self.docker_client.containers.get(container_name)
+            await self.message_creator.send_simple_message(f"Removing container: `{container_name}`")
+            containerInfo.remove()
+        except requests.exceptions.HTTPError:
+            await self.__send_other_possible_containers(container_name)
+
     # Private methods
-    async def __get_containers(self, filter_name: str = ""):
-        containers = self.dockerClient.containers.list(all=True)
+    async def __get_containers_formatted(self, filter_name: str = ""):
+        containers = self.docker_client.containers.list(all=True)
         containerInfoList = []
 
         for container in containers:
@@ -156,20 +173,20 @@ class CommandExecutor:
         return containerInfoList
 
     async def __send_other_possible_containers(self, container_name: str):
-        containers = await self.__get_containers(container_name)
+        containers = await self.__get_containers_formatted(container_name)
 
         # If there are any containers that contain that name, show them.
         if len(containers) > 0:
-            await self.messageCreator.send_embed_with_object_info(
+            await self.message_creator.send_embed_with_object_info(
                 title=f"Could not find container with that name: `{container_name}`",
                 description="Did you mean one of these?",
-                items=containers,
+                items=containers
             )
         else:
-            await self.messageCreator.send_simple_message(f"Could not find specific or related containers with name: "
+            await self.message_creator.send_simple_message(f"Could not find specific or related containers with name: "
                                                           f"`{container_name}`")
 
     async def __raise_if_manager(self, container_name):
-        if container_name == "docker-manager-discord":
-            await self.messageCreator.send_simple_message("You cannot kill me, mortal")
+        if container_name == APP_NAME:
+            await self.message_creator.send_simple_message("You cannot kill me, mortal")
             raise Exception("Nope, I stay online forever.")

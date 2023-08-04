@@ -36,7 +36,7 @@ dockerClient = None
 try:
     dockerClient = docker.from_env()
 except DockerException:
-    logger.error('__________________________________________________________________________\n'
+    logger.error('____________________________________\n'
                  '[ERROR] Could not connect to docker. \n'
                  'Make sure that docker is running, and this app is running in the same environment.')
     exit("Exiting application.")
@@ -106,6 +106,18 @@ async def rename_container(interaction: discord.Interaction, old_name: str, new_
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing rename container command.")
     await executor.rename_container(old_name, new_name)
+
+
+@discordClient.tree.command()
+@app_commands.rename(container_name='container-name')
+@app_commands.describe(container_name='The name of the container to remove')
+async def remove_container(interaction: discord.Interaction, container_name: str):
+    """Remove a container. Warning: it cannot be recovered after."""
+    check_if_allowed(interaction.user.id)
+
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing remove container command.")
+    await executor.remove_container(container_name)
 
 
 @discordClient.tree.command()
