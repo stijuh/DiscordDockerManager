@@ -33,8 +33,8 @@ class Paginator:
 
             page.add_field(name=item["Name"], value=f'```json\n{formatted}\n```', inline=inline)
 
-        # If there's a not fully page left, add it too
-        if len(items) % items_per_page != 0:
+        # If there are no pages, or a not-full page left, add it.
+        if len(self.pages) == 0 or len(items) % items_per_page != 0:
             self.pages.append(page)
 
         await self.interaction.response.send_message(embed=self.pages[self.currentPage],
