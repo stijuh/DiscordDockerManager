@@ -136,12 +136,16 @@ class CommandExecutor:
             if filter_name not in container.name:
                 continue
 
+            runningFor = ""
+            if container.status == "running":
+                runningFor = parseAndGetFormattedTimeDifference(container.attrs.get("State")["StartedAt"])
+
             containerInfo = {
                 "Name": container.name,
                 "Info": {
                     "Status": container.status,
                     "Started": container.attrs.get("State")["StartedAt"][:10],
-                    "Running for": parseAndGetFormattedTimeDifference(container.attrs.get("State")["StartedAt"])
+                    "Running for": runningFor
                 }
             }
 
