@@ -150,7 +150,7 @@ class CommandExecutor:
         containerInfoList = []
 
         for container in containers:
-            if filter_name not in container.name:
+            if filter_name.lower() not in container.name.lower():
                 continue
 
             runningFor = ""

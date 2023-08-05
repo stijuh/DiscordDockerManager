@@ -30,6 +30,7 @@ This app relies on a couple of environment variables:
 
 - **DISCORD_TOKEN** ~ this is the token of your discord bot, as created in the [discord developer portal](https://discord.com/developers)
 - **ADMINS** ~ A list of user id's that are allowed to use the bot. It is comma seperated.
+- **GUILDS** ~ A list of guild (also known as a server) id's that the commands will be usable in. It is comma seperated.
 
 See the example.env for.. well, examples.
 
