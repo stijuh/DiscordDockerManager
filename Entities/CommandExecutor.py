@@ -1,9 +1,8 @@
 import os
 
 import discord
-import requests
-
 import docker
+import requests
 from docker.errors import NotFound
 from docker.models.containers import Container
 
@@ -39,7 +38,7 @@ class CommandExecutor:
                 "Name": "Get all containers",
                 "Info": {
                     "Command:": "/containers"
-            }
+                }
             },
             {
                 "Name": "Restart container",
@@ -76,11 +75,11 @@ class CommandExecutor:
         )
 
     async def get_and_send_containers(self, filter_name: str = ""):
-        containers = await self.__get_containers_formatted(filter_name)
+        containers = await self.get_containers_formatted(filter_name)
 
         if len(containers) == 0 or (len(containers) == 1 and containers[0]["Name"] == APP_NAME):
             await self.message_creator.send_simple_message("There are currently no other containers found! Start one, "
-                                                          "and run the command again.")
+                                                           "and run the command again.")
         else:
             await self.message_creator.send_embed_with_object_info(
                 title="Containers",
@@ -114,7 +113,7 @@ class CommandExecutor:
         try:
             containerInfo: Container = self.docker_client.containers.get(old_container_name)
             await self.message_creator.send_simple_message(f"Renaming container: `{old_container_name}` "
-                                                          f"to `{new_container_name}`")
+                                                           f"to `{new_container_name}`")
             containerInfo.rename(new_container_name)
         except requests.exceptions.HTTPError:
             await self.__send_other_possible_containers(old_container_name)
@@ -146,8 +145,7 @@ class CommandExecutor:
         except requests.exceptions.HTTPError:
             await self.__send_other_possible_containers(container_name)
 
-    # Private methods
-    async def __get_containers_formatted(self, filter_name: str = ""):
+    async def get_containers_formatted(self, filter_name: str = ""):
         containers = self.docker_client.containers.list(all=True)
         containerInfoList = []
 
@@ -172,8 +170,9 @@ class CommandExecutor:
 
         return containerInfoList
 
+    # Private methods
     async def __send_other_possible_containers(self, container_name: str):
-        containers = await self.__get_containers_formatted(container_name)
+        containers = await self.get_containers_formatted(container_name)
 
         # If there are any containers that contain that name, show them.
         if len(containers) > 0:
@@ -184,7 +183,7 @@ class CommandExecutor:
             )
         else:
             await self.message_creator.send_simple_message(f"Could not find specific or related containers with name: "
-                                                          f"`{container_name}`")
+                                                           f"`{container_name}`")
 
     async def __raise_if_manager(self, container_name):
         if container_name == APP_NAME:

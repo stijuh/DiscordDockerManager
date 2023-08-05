@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import List
 
 import discord
 import docker
@@ -130,6 +131,22 @@ async def logs(interaction: discord.Interaction, container_name: str):
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing restart container command.")
     await executor.retrieve_logs_from_container(container_name)
+
+
+@restart_container.autocomplete('container_name')
+@stop_container.autocomplete('container_name')
+@remove_container.autocomplete('container_name')
+@rename_container.autocomplete('old_name')
+@logs.autocomplete('container_name')
+async def containers_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    container_infos = await executor.get_containers_formatted()
+    container_names = list(map(lambda container_info: container_info["Name"], container_infos))
+
+    return [
+        app_commands.Choice(name=container, value=container)
+        for container in container_names if current.lower() in container.lower()
+    ]
 
 
 def check_if_allowed(userId):
