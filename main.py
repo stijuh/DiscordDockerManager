@@ -21,14 +21,16 @@ logger.info('[INFO] initializing DockerManagerBot')
 logger.info('[INFO] Updating environment variables')
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-adminList = str(os.getenv('ADMINS'))
-ADMINS = adminList.split(",")
+ADMINS = str(os.getenv('ADMINS')).split(",")
+GUILDS = str(os.getenv('GUILDS')).split(",")
 
 # Set intents (permissions).
 logger.info('[INFO] Setting discord intents (permissions)')
 intents = discord.Intents.default()
 intents.message_content = True
-discordClient = DockerManagerClient(intents=intents)
+
+# Initialize discord client.
+discordClient = DockerManagerClient(intents=intents, guild_ids=GUILDS)
 
 # Initialize Docker Engine.
 logger.info('[INFO] Trying to get the docker client from the environment..')
@@ -156,4 +158,7 @@ def check_if_allowed(userId):
         raise Exception(f"Nuh-uh: user {userId} is not a registereds admin.")
 
 
-discordClient.run(TOKEN)
+try:
+    discordClient.run(TOKEN)
+except TypeError:
+    logger.error("[ERROR] Could not start the discord client. Make sure you have all the necessary env variables.")
