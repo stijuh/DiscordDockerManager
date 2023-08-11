@@ -20,6 +20,12 @@ class CommandExecutor:
 
         self.message_creator = MessageCreator(message=message, interaction=interaction)
 
+    async def get_running_total_containers(self) -> (int, int) :
+        running = len(self.docker_client.containers.list())
+        total = len(self.docker_client.containers.list(all=True))
+
+        return running, total
+
     async def get_help(self):
         listOfCommands = [
             {

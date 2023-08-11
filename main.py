@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from Entities.CommandExecutor import CommandExecutor
 from Entities.DockerManagerClient import DockerManagerClient
 from Common.contants import APP_VERSION
+from Entities.StatusRoutine import StatusRoutine
 
 # Initialize logging.
 logger = logging.getLogger()
@@ -47,8 +48,11 @@ except DockerException:
 
 @discordClient.event
 async def on_ready():
-    print(f"Client logged in as {discordClient.user}")
-    logger.info(f"Version {APP_VERSION}")
+    logger.info(f"[INFO] Client logged in as {discordClient.user}")
+    logger.info(f"[INFO] Running version {APP_VERSION}")
+
+    discordClient.loop.create_task(StatusRoutine(discordClient, dockerClient))
+    logger.info("[INFO] Created 'container count status' loop")
 
 
 @discordClient.tree.command()
@@ -59,6 +63,8 @@ async def help(interaction: discord.Interaction):
     logger.info("[INFO] Executing help command.")
     executor = CommandExecutor(dockerClient, interaction=interaction)
     await executor.get_help()
+
+    await update_container_amount()
 
 
 @discordClient.tree.command()
@@ -72,6 +78,8 @@ async def containers(interaction: discord.Interaction, container_filter: str = "
     executor = CommandExecutor(dockerClient, interaction=interaction)
     await executor.get_and_send_containers(container_filter)
 
+    await update_container_amount()
+
 
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
@@ -84,6 +92,8 @@ async def restart_container(interaction: discord.Interaction, container_name: st
     logger.info("[INFO] Executing restart container command.")
     await executor.restart_container(container_name)
 
+    await update_container_amount()
+
 
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
@@ -95,6 +105,8 @@ async def stop_container(interaction: discord.Interaction, container_name: str):
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing stop container command.")
     await executor.stop_container(container_name)
+
+    await update_container_amount()
 
 
 @discordClient.tree.command()
@@ -110,6 +122,8 @@ async def rename_container(interaction: discord.Interaction, old_name: str, new_
     logger.info("[INFO] Executing rename container command.")
     await executor.rename_container(old_name, new_name)
 
+    await update_container_amount()
+
 
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
@@ -121,6 +135,8 @@ async def remove_container(interaction: discord.Interaction, container_name: str
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing remove container command.")
     await executor.remove_container(container_name)
+
+    await update_container_amount()
 
 
 @discordClient.tree.command()
@@ -134,11 +150,14 @@ async def logs(interaction: discord.Interaction, container_name: str):
     logger.info("[INFO] Executing restart container command.")
     await executor.retrieve_logs_from_container(container_name)
 
+    await update_container_amount()
+
 
 @restart_container.autocomplete('container_name')
 @stop_container.autocomplete('container_name')
 @remove_container.autocomplete('container_name')
 @rename_container.autocomplete('old_name')
+@containers.autocomplete('container_filter')
 @logs.autocomplete('container_name')
 async def containers_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
     executor = CommandExecutor(dockerClient, interaction=interaction)
@@ -157,6 +176,14 @@ def check_if_allowed(userId):
         logger.warning("[INFO] Container overview command called by non-admin.")
         raise Exception(f"Nuh-uh: user {userId} is not a registereds admin.")
 
+
+async def update_container_amount():
+    executor = CommandExecutor(dockerClient)
+    running, total = await executor.get_running_total_containers()
+    await discordClient.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.watching,
+        name=f"{running} of {total} containers running")
+    )
 
 try:
     discordClient.run(TOKEN)
