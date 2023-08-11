@@ -18,16 +18,25 @@ class MessageCreator:
 
         self.paginator = Paginator(interaction=self.interaction)
 
-    async def send_simple_message(self, text, file: discord.File = None, followup=False):
+    async def send_simple_message(self, text, file: discord.File = None, followup=False, user_only=True):
         if followup:
-            await self.interaction.followup.send(text, ephemeral=True)
+            await self.interaction.followup.send(text, ephemeral=user_only)
         if self.message is not None:
             await self.message.channel.send(text, file=file)
         elif self.interaction is not None:
             if file is not None:
-                await self.interaction.response.send_message(text, file=file, ephemeral=True)
+                await self.interaction.response.send_message(text, file=file, ephemeral=user_only)
             else:
-                await self.interaction.response.send_message(text, ephemeral=True)
+                await self.interaction.response.send_message(text, ephemeral=user_only)
+
+    async def send_simple_embed(self, title, name: str, text: str):
+        embedded = get_standard_embed()
+        embedded.add_field(name=name, value=text, inline=False)
+
+        if self.message is not None:
+            await self.message.channel.send(embed=embedded)
+        elif self.interaction is not None:
+            await self.interaction.response.send_message(embed=embedded, ephemeral=True)
 
     async def send_embed_with_object_info(self, title, items, description="", items_per_page: int = 4, inline=False):
         """

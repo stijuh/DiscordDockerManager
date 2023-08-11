@@ -153,13 +153,43 @@ async def logs(interaction: discord.Interaction, container_name: str):
     await update_container_amount()
 
 
+@discordClient.tree.command()
+@app_commands.rename(image_name='image')
+@app_commands.rename(cli_commands='cli-commands')
+@app_commands.describe(image_name='The name of the image to pull and run')
+@app_commands.describe(cli_commands='command to run after the container started')
+async def run_new(interaction: discord.Interaction, image_name: str, cli_commands: str = None,
+                  container_name: str = None):
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing run new container command.")
+    await executor.run_new_container(image_name, cli_commands, container_name)
+
+    await update_container_amount()
+
+
+@discordClient.tree.command()
+@app_commands.describe(container_range='The amount of the most recent containers to remove')
+@app_commands.describe(exclude='A comma-separated string of container names to exclude. '
+                               'Example: lucky_buck,magical_unicorn,bread_can')
+async def remove_range(interaction: discord.Interaction, container_range: int, exclude: str):
+    """Retrieve the recent logs of a container."""
+    check_if_allowed(interaction.user.id)
+
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing removing range of containers command.")
+    await executor.remove_range_of_containers(container_range, exclude)
+
+    await update_container_amount()
+
+
 @restart_container.autocomplete('container_name')
 @stop_container.autocomplete('container_name')
 @remove_container.autocomplete('container_name')
 @rename_container.autocomplete('old_name')
 @containers.autocomplete('container_filter')
 @logs.autocomplete('container_name')
-async def containers_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
+async def containers_autocomplete(interaction: discord.Interaction, current: str) \
+        -> List[app_commands.Choice[str]]:
     executor = CommandExecutor(dockerClient, interaction=interaction)
     container_infos = await executor.get_containers_formatted()
     container_names = list(map(lambda container_info: container_info["Name"], container_infos))
@@ -170,20 +200,37 @@ async def containers_autocomplete(interaction: discord.Interaction, current: str
     ]
 
 
+@remove_range.autocomplete('exclude')
+async def multiple_containers_autocomplete(interaction: discord.Interaction, current: str) \
+        -> List[app_commands.Choice[str]]:
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    container_infos = await executor.get_containers_formatted()
+    container_names = list(map(lambda container_info: container_info["Name"], container_infos))
+
+    # NOTE: isn't this lovely to look at :)
+    return [
+        app_commands.Choice(name=(container + ',' if current != '' else container) + current,
+                            value=current + "," + container)
+        for container in container_names if container.lower() not in current.lower() or current == ""
+    ]
+
+
 def check_if_allowed(userId):
     userId = str(userId)
     if userId not in ADMINS:
         logger.warning("[INFO] Container overview command called by non-admin.")
-        raise Exception(f"Nuh-uh: user {userId} is not a registereds admin.")
+        raise Exception(f"Nuh-uh: user {userId} is not a registered admin.")
 
 
 async def update_container_amount():
     executor = CommandExecutor(dockerClient)
     running, total = await executor.get_running_total_containers()
+
     await discordClient.change_presence(activity=discord.Activity(
         type=discord.ActivityType.watching,
         name=f"{running} of {total} containers running")
     )
+
 
 try:
     discordClient.run(TOKEN)

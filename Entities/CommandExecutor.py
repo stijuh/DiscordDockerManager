@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import discord
 import docker
@@ -20,7 +21,7 @@ class CommandExecutor:
 
         self.message_creator = MessageCreator(message=message, interaction=interaction)
 
-    async def get_running_total_containers(self) -> (int, int) :
+    async def get_running_total_containers(self) -> (int, int):
         running = len(self.docker_client.containers.list())
         total = len(self.docker_client.containers.list(all=True))
 
@@ -100,7 +101,7 @@ class CommandExecutor:
             containerInfo: Container = self.docker_client.containers.get(container_name)
             await self.message_creator.send_simple_message(f"Restarting container: `{container_name}`")
             containerInfo.restart()
-        except requests.exceptions.HTTPError:
+        except NotFound:
             await self.__send_other_possible_containers(container_name)
 
     async def stop_container(self, container_name: str):
@@ -110,7 +111,7 @@ class CommandExecutor:
             containerInfo: Container = self.docker_client.containers.get(container_name)
             await self.message_creator.send_simple_message(f"Stopping container: `{container_name}`")
             containerInfo.stop()
-        except requests.exceptions.HTTPError:
+        except NotFound:
             await self.__send_other_possible_containers(container_name)
 
     async def rename_container(self, old_container_name: str, new_container_name):
@@ -118,11 +119,14 @@ class CommandExecutor:
 
         try:
             containerInfo: Container = self.docker_client.containers.get(old_container_name)
-            await self.message_creator.send_simple_message(f"Renaming container: `{old_container_name}` "
-                                                           f"to `{new_container_name}`")
             containerInfo.rename(new_container_name)
-        except requests.exceptions.HTTPError:
+            await self.message_creator.send_simple_message(f"Renamed container: `{old_container_name}` "
+                                                           f"to `{new_container_name}`")
+        except NotFound:
             await self.__send_other_possible_containers(old_container_name)
+        except docker.errors.APIError as e:
+            await self.message_creator.send_simple_message(f"Could not rename container. "
+                                                           f"Reason: ```-diff{str(e.explanation)}```")
 
     async def retrieve_logs_from_container(self, container_name):
         try:
@@ -150,6 +154,39 @@ class CommandExecutor:
             containerInfo.remove()
         except requests.exceptions.HTTPError:
             await self.__send_other_possible_containers(container_name)
+
+    async def remove_range_of_containers(self, container_range: int, exclude: str):
+        containers = self.docker_client.containers.list(all=True)
+
+        removed: int = 0
+        for index in range(0, container_range if container_range <= len(containers) else len(containers)):
+            container = containers[index]
+            if container.name == APP_NAME or container.name in exclude:
+                continue
+
+            container.remove()
+            removed += 1
+
+        await self.message_creator.send_simple_message(f"Removed {removed} containers.")
+
+    async def run_new_container(self, image_name: str, cli_commands: str = None, container_name: str = None):
+        try:
+            container: Container = self.docker_client.containers.run(
+                image=image_name,
+                command=cli_commands,
+                name=container_name,
+                detach=True
+            )
+
+            await self.message_creator.send_simple_message(f"Running container '**{container.name}**' "
+                                                           f"from image `{image_name}` "
+                                                           f"and executing commands: `{cli_commands}`")
+        except docker.errors.ImageNotFound:
+            await self.message_creator.send_simple_message(f"Could not find an image with name `{image_name}`.")
+        except docker.errors.APIError as e:
+            await self.message_creator.send_simple_embed(title="Could not execute container.",
+                                                         name="Reason:",
+                                                         text=f"""```diff\n-{str(e.explanation)}```""")
 
     async def get_containers_formatted(self, filter_name: str = ""):
         containers = self.docker_client.containers.list(all=True)

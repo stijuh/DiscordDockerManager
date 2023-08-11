@@ -5,7 +5,7 @@ import asyncio
 from Entities.CommandExecutor import CommandExecutor
 
 
-# Updates every 10 seconds
+# Updates every 25 seconds
 async def StatusRoutine(discordClient: discord.Client, dockerClient: docker.DockerClient):
     while True:
         executor = CommandExecutor(dockerClient)
