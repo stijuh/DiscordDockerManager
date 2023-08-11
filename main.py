@@ -8,15 +8,14 @@ from discord import app_commands
 from docker.errors import DockerException
 from dotenv import load_dotenv
 
+from Common.contants import APP_VERSION
 from Entities.CommandExecutor import CommandExecutor
 from Entities.DockerManagerClient import DockerManagerClient
-from Common.contants import APP_VERSION
 from Entities.StatusRoutine import StatusRoutine
 
 # Initialize logging.
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger.info('[INFO] initializing DockerManagerBot')
 
 # Initialize environment.
 logger.info('[INFO] Updating environment variables')
@@ -71,7 +70,7 @@ async def help(interaction: discord.Interaction):
 @app_commands.rename(container_filter='container-name')
 @app_commands.describe(container_filter='Leave empty to get all containers')
 async def containers(interaction: discord.Interaction, container_filter: str = ""):
-    """Overview of all containers. Use the filter to look for specific containers"""
+    """Overview of all containers. Use the filter to look for specific containers."""
     check_if_allowed(interaction.user.id)
 
     logger.info("[INFO] Executing container overview command.")
@@ -84,7 +83,7 @@ async def containers(interaction: discord.Interaction, container_filter: str = "
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
 @app_commands.describe(container_name='The name of the container to restart')
-async def restart_container(interaction: discord.Interaction, container_name: str):
+async def restart(interaction: discord.Interaction, container_name: str):
     """Restart a container."""
     check_if_allowed(interaction.user.id)
 
@@ -98,7 +97,7 @@ async def restart_container(interaction: discord.Interaction, container_name: st
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
 @app_commands.describe(container_name='The name of the container to stop')
-async def stop_container(interaction: discord.Interaction, container_name: str):
+async def stop(interaction: discord.Interaction, container_name: str):
     """Stop a container."""
     check_if_allowed(interaction.user.id)
 
@@ -114,7 +113,7 @@ async def stop_container(interaction: discord.Interaction, container_name: str):
 @app_commands.describe(old_name='The name of the container to rename')
 @app_commands.rename(new_name='new-name')
 @app_commands.describe(new_name='The new name of the container')
-async def rename_container(interaction: discord.Interaction, old_name: str, new_name: str):
+async def rename(interaction: discord.Interaction, old_name: str, new_name: str):
     """Rename a container."""
     check_if_allowed(interaction.user.id)
 
@@ -128,7 +127,7 @@ async def rename_container(interaction: discord.Interaction, old_name: str, new_
 @discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
 @app_commands.describe(container_name='The name of the container to remove')
-async def remove_container(interaction: discord.Interaction, container_name: str):
+async def remove(interaction: discord.Interaction, container_name: str):
     """Remove a container. Warning: it cannot be recovered after."""
     check_if_allowed(interaction.user.id)
 
@@ -158,8 +157,10 @@ async def logs(interaction: discord.Interaction, container_name: str):
 @app_commands.rename(cli_commands='cli-commands')
 @app_commands.describe(image_name='The name of the image to pull and run')
 @app_commands.describe(cli_commands='command to run after the container started')
-async def run_new(interaction: discord.Interaction, image_name: str, cli_commands: str = None,
-                  container_name: str = None):
+@app_commands.describe(container_name='The name to give the new container')
+async def run(interaction: discord.Interaction, image_name: str, cli_commands: str = None,
+              container_name: str = None):
+    """Run a new container using an existing image like you would using `docker run`."""
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing run new container command.")
     await executor.run_new_container(image_name, cli_commands, container_name)
@@ -182,10 +183,10 @@ async def remove_range(interaction: discord.Interaction, container_range: int, e
     await update_container_amount()
 
 
-@restart_container.autocomplete('container_name')
-@stop_container.autocomplete('container_name')
-@remove_container.autocomplete('container_name')
-@rename_container.autocomplete('old_name')
+@restart.autocomplete('container_name')
+@stop.autocomplete('container_name')
+@remove.autocomplete('container_name')
+@rename.autocomplete('old_name')
 @containers.autocomplete('container_filter')
 @logs.autocomplete('container_name')
 async def containers_autocomplete(interaction: discord.Interaction, current: str) \

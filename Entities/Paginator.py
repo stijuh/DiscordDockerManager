@@ -1,7 +1,9 @@
 import json
 import math
+
 import discord
 from discord.ui import View, Button
+
 from Common.contants import APP_VERSION
 
 page_title_separation = " | page "
@@ -9,6 +11,7 @@ page_title_separation = " | page "
 
 class Paginator:
     """Only works with interactions."""
+
     def __init__(self, interaction: discord.Interaction):
         self.interaction: discord.Interaction = interaction
         self.pages = []
@@ -27,7 +30,7 @@ class Paginator:
 
             page.add_field(name=item["Name"], value=f'```json\n{formatted}\n```', inline=inline)
 
-            if index > 0 and (index+1) % items_per_page == 0:
+            if index > 0 and (index + 1) % items_per_page == 0:
                 self.pages.append(page)
                 page = get_standard_embed()
                 page.title = title + page_title_separation + str(math.ceil(index / items_per_page) + 1)

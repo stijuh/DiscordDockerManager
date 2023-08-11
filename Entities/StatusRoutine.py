@@ -1,6 +1,7 @@
+import asyncio
+
 import discord
 import docker
-import asyncio
 
 from Entities.CommandExecutor import CommandExecutor
 
