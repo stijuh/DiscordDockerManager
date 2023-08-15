@@ -139,6 +139,21 @@ async def remove(interaction: discord.Interaction, container_name: str):
 
 
 @discordClient.tree.command()
+@app_commands.describe(container_range='The amount of the most recent containers to remove')
+@app_commands.describe(exclude='A comma-separated string of container names to exclude. '
+                               'Example: lucky_buck,magical_unicorn,bread_can')
+async def remove_range(interaction: discord.Interaction, container_range: int, exclude: str):
+    """Retrieve the recent logs of a container."""
+    check_if_allowed(interaction.user.id)
+
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing removing range of containers command.")
+    await executor.remove_range_of_containers(container_range, exclude)
+
+    await update_container_amount()
+
+
+@discordClient.tree.command()
 @app_commands.rename(container_name='container-name')
 @app_commands.describe(container_name='The name of the container to get the logs from')
 async def logs(interaction: discord.Interaction, container_name: str):
@@ -164,21 +179,6 @@ async def run(interaction: discord.Interaction, image_name: str, cli_commands: s
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing run new container command.")
     await executor.run_new_container(image_name, cli_commands, container_name)
-
-    await update_container_amount()
-
-
-@discordClient.tree.command()
-@app_commands.describe(container_range='The amount of the most recent containers to remove')
-@app_commands.describe(exclude='A comma-separated string of container names to exclude. '
-                               'Example: lucky_buck,magical_unicorn,bread_can')
-async def remove_range(interaction: discord.Interaction, container_range: int, exclude: str):
-    """Retrieve the recent logs of a container."""
-    check_if_allowed(interaction.user.id)
-
-    executor = CommandExecutor(dockerClient, interaction=interaction)
-    logger.info("[INFO] Executing removing range of containers command.")
-    await executor.remove_range_of_containers(container_range, exclude)
 
     await update_container_amount()
 

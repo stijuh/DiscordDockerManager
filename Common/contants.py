@@ -1,3 +1,3 @@
-APP_VERSION = "0.7.0"
+APP_VERSION = "0.7.1"
 BOT_MENTION_ID = "<@1127985097564495974>"
-APP_NAME = "docker-manager-bot"
+APP_NAME = "docker-manager-discord"

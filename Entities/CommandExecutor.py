@@ -150,8 +150,9 @@ class CommandExecutor:
         try:
             containerInfo: Container = self.docker_client.containers.get(container_name)
             await self.message_creator.send_simple_message(f"Removing container: `{container_name}`")
-            containerInfo.remove()
-        except requests.exceptions.HTTPError:
+
+            containerInfo.remove(force=True)
+        except NotFound:
             await self.__send_other_possible_containers(container_name)
 
     async def remove_range_of_containers(self, container_range: int, exclude: str):
@@ -183,9 +184,8 @@ class CommandExecutor:
         except docker.errors.ImageNotFound:
             await self.message_creator.send_simple_message(f"Could not find an image with name `{image_name}`.")
         except docker.errors.APIError as e:
-            await self.message_creator.send_simple_embed(title="Could not execute container.",
-                                                         name="Reason:",
-                                                         text=f"""```diff\n-{str(e.explanation)}```""")
+            await self.message_creator.send_exception(exception_message=e.explanation,
+                                                      description="Could not execute container.")
 
     async def get_containers_formatted(self, filter_name: str = ""):
         containers = self.docker_client.containers.list(all=True)

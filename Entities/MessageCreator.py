@@ -51,6 +51,11 @@ class MessageCreator:
             inline=inline
         )
 
+    async def send_exception(self, exception_message: str, description: str = ""):
+        await self.send_simple_embed(title=description if description != '' else "Could not run command.",
+                                     name="Reason:",
+                                     text=f"""```diff\n-{str(exception_message)}```""")
+
 
 def get_standard_embed():
     return discord.Embed(title="Docker Manager", description="", colour=discord.Colour.blue()) \
