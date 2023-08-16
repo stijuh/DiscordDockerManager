@@ -155,7 +155,7 @@ class CommandExecutor:
         except NotFound:
             await self.__send_other_possible_containers(container_name)
 
-    async def remove_range_of_containers(self, container_range: int, exclude: str):
+    async def remove_range_of_containers(self, container_range: int, exclude: str = ""):
         containers = self.docker_client.containers.list(all=True)
 
         removed: int = 0
