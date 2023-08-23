@@ -13,6 +13,8 @@ from Entities.CommandExecutor import CommandExecutor
 from Entities.DockerManagerClient import DockerManagerClient
 from Entities.StatusRoutine import StatusRoutine
 
+# INITIALIZATION #
+
 # Initialize logging.
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -53,6 +55,8 @@ async def on_ready():
     discordClient.loop.create_task(StatusRoutine(discordClient, dockerClient))
     logger.info("[INFO] Created 'container count status' loop")
 
+
+# COMMANDS #
 
 @discordClient.tree.command()
 async def help(interaction: discord.Interaction):
