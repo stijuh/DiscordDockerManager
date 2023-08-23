@@ -183,6 +183,19 @@ async def run(interaction: discord.Interaction, image_name: str, cli_commands: s
     await update_container_amount()
 
 
+@discordClient.tree.command()
+@app_commands.describe(git_repo_url='The url of the git repository')
+async def deploy_from_git(interaction: discord.Interaction, git_repo_url: str):
+    """Deploys the app from the given git repository. The repo needs to contain a docker-compose.yml file."""
+    check_if_allowed(interaction.user.id)
+
+    executor = CommandExecutor(dockerClient, interaction=interaction)
+    logger.info("[INFO] Executing deploy_from_git command.")
+    await executor.deploy_from_git(git_repo_url)
+
+    await update_container_amount()
+
+
 @restart.autocomplete('container_name')
 @stop.autocomplete('container_name')
 @remove.autocomplete('container_name')

@@ -31,6 +31,7 @@ class MessageCreator:
 
     async def send_simple_embed(self, title, name: str, text: str):
         embedded = get_standard_embed()
+        embedded.title = title
         embedded.add_field(name=name, value=text, inline=False)
 
         if self.message is not None:

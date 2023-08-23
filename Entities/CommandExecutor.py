@@ -2,13 +2,13 @@ import os
 
 import discord
 import docker
-import requests
 from docker.errors import NotFound
 from docker.models.containers import Container
 
 from Common.contants import APP_NAME
 from Common.utils import parseAndGetFormattedTimeDifference, strip_ansi_escape_codes
 from Entities.MessageCreator import MessageCreator
+from Entities.RunnerManager import RunnerManager
 
 
 class CommandExecutor:
@@ -19,6 +19,7 @@ class CommandExecutor:
         self.interaction = interaction
 
         self.message_creator = MessageCreator(message=message, interaction=interaction)
+        self.runner = RunnerManager(dockerClient, )
 
     async def get_running_total_containers(self) -> (int, int):
         running = len(self.docker_client.containers.list())
@@ -171,13 +172,7 @@ class CommandExecutor:
 
     async def run_new_container(self, image_name: str, cli_commands: str = None, container_name: str = None):
         try:
-            container: Container = self.docker_client.containers.run(
-                image=image_name,
-                command=cli_commands,
-                name=container_name,
-                detach=True
-            )
-
+            container = await self.runner.run_container_from_cli(image_name, cli_commands, container_name)
             await self.message_creator.send_simple_message(f"Running container '**{container.name}**' "
                                                            f"from image `{image_name}` "
                                                            f"and executing commands: `{cli_commands}`")
@@ -185,7 +180,10 @@ class CommandExecutor:
             await self.message_creator.send_simple_message(f"Could not find an image with name `{image_name}`.")
         except docker.errors.APIError as e:
             await self.message_creator.send_exception(exception_message=e.explanation,
-                                                      description="Could not execute container.")
+                                                      description="Could not run container.")
+
+    async def deploy_from_git(self, git_repo_url: str):
+        await self.runner.run_container_from_git(git_repo_url)
 
     async def get_containers_formatted(self, filter_name: str = ""):
         containers = self.docker_client.containers.list(all=True)
