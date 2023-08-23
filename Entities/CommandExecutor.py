@@ -19,7 +19,7 @@ class CommandExecutor:
         self.interaction = interaction
 
         self.message_creator = MessageCreator(message=message, interaction=interaction)
-        self.runner = RunnerManager(dockerClient, )
+        self.runner = RunnerManager(dockerClient, self.message_creator)
 
     async def get_running_total_containers(self) -> (int, int):
         running = len(self.docker_client.containers.list())
@@ -182,8 +182,8 @@ class CommandExecutor:
             await self.message_creator.send_exception(exception_message=e.explanation,
                                                       description="Could not run container.")
 
-    async def deploy_from_git(self, git_repo_url: str):
-        await self.runner.run_container_from_git(git_repo_url)
+    async def deploy_from_git(self, git_repo_url: str, docker_compose_name: str = ""):
+        await self.runner.run_container_from_git(git_repo_url, compose_name=docker_compose_name)
 
     async def get_containers_formatted(self, filter_name: str = ""):
         containers = self.docker_client.containers.list(all=True)

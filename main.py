@@ -146,7 +146,7 @@ async def remove(interaction: discord.Interaction, container_name: str):
 @app_commands.describe(container_range='The amount of the most recent containers to remove')
 @app_commands.describe(exclude='A comma-separated string of container names to exclude. '
                                'Example: lucky_buck,magical_unicorn,bread_can')
-async def remove_range(interaction: discord.Interaction, container_range: int, exclude: str):
+async def remove_range(interaction: discord.Interaction, container_range: int, exclude: str = ""):
     """Retrieve the recent logs of a container."""
     check_if_allowed(interaction.user.id)
 
@@ -171,6 +171,8 @@ async def logs(interaction: discord.Interaction, container_name: str):
     await update_container_amount()
 
 
+# Interaction with git repo's/hosted docker images #
+
 @discordClient.tree.command()
 @app_commands.rename(image_name='image')
 @app_commands.rename(cli_commands='cli-commands')
@@ -179,7 +181,7 @@ async def logs(interaction: discord.Interaction, container_name: str):
 @app_commands.describe(container_name='The name to give the new container')
 async def run(interaction: discord.Interaction, image_name: str, cli_commands: str = None,
               container_name: str = None):
-    """Run a new container using an existing image like you would using `docker run`."""
+    """Run a new container using an existing image like you would when using `docker run`."""
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing run new container command.")
     await executor.run_new_container(image_name, cli_commands, container_name)
@@ -189,16 +191,20 @@ async def run(interaction: discord.Interaction, image_name: str, cli_commands: s
 
 @discordClient.tree.command()
 @app_commands.describe(git_repo_url='The url of the git repository')
-async def deploy_from_git(interaction: discord.Interaction, git_repo_url: str):
+@app_commands.describe(docker_compose_name='If the name of the compose file is different to "docker-compose.yml"')
+async def runfromgit(interaction: discord.Interaction, git_repo_url: str,
+                     docker_compose_name: str = "docker-compose.yml"):
     """Deploys the app from the given git repository. The repo needs to contain a docker-compose.yml file."""
     check_if_allowed(interaction.user.id)
 
     executor = CommandExecutor(dockerClient, interaction=interaction)
     logger.info("[INFO] Executing deploy_from_git command.")
-    await executor.deploy_from_git(git_repo_url)
+    await executor.deploy_from_git(git_repo_url, docker_compose_name=docker_compose_name)
 
     await update_container_amount()
 
+
+# Autocomplete functionality #
 
 @restart.autocomplete('container_name')
 @stop.autocomplete('container_name')
