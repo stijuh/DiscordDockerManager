@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import discord
 import docker
@@ -135,6 +136,7 @@ class CommandExecutor:
             decoded_logs = containerInfo.logs().decode()
             logs_without_ansi = strip_ansi_escape_codes(decoded_logs)
 
+            pathlib.Path('temp').mkdir(exist_ok=True)
             tempFileName = f'temp/{containerInfo.name}-logs.txt'
             with open(tempFileName, 'w') as f:
                 f.write(logs_without_ansi)
