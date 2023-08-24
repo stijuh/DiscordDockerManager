@@ -165,7 +165,7 @@ class CommandExecutor:
             if container.name == APP_NAME or container.name in exclude:
                 continue
 
-            container.remove()
+            container.remove(force=True)
             removed += 1
 
         await self.message_creator.send_simple_message(f"Removed {removed} containers.")

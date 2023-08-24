@@ -7,6 +7,7 @@ from stat import S_IWUSR, S_IREAD
 import discord
 import docker
 import git
+import python_on_whales
 from docker.models.containers import Container
 from python_on_whales import DockerClient
 
@@ -40,14 +41,23 @@ class RunnerManager:
 
         # Clone the Git repository inside the temporary folder.
         await self.message_creator.send_simple_message(f"Pulling from repository: '**{repo_name}**'..")
-        git.Repo.clone_from(url=git_repo_url, to_path=repo_path, multi_options=["--depth=1"])
-        logger.info(f"[INFO] Cloned into path `{repo_path}`")
 
         try:
+            git.Repo.clone_from(url=git_repo_url, to_path=repo_path, multi_options=["--depth=1"])
+            logger.info(f"[INFO] Cloned into path `{repo_path}`")
+
             await self.message_creator.send_simple_message(f"Pulling from repository: '**{repo_name}**'.. [SUCCESS]\n"
                                                            f"Executing `docker compose up`..", edit=True)
-        except discord.errors.InteractionResponded:
-            pass
+        except git.exc.GitCommandError as e:
+            await self.message_creator.send_simple_message(f"Pulling from repository: '**{repo_name}**'.. [Error]",
+                                                           edit=True)
+
+            await self.message_creator\
+                .send_exception(exception_message="Make sure the repository exists, that you have access to it and "
+                                                  "that the link you provided is correct.",
+                                description=f"Could not pull from repository `{repo_name}`.",
+                                followup=True)
+            return
 
         docker_whales = DockerClient(compose_files=[f"{repo_path}\\{compose_name}"])
 
@@ -57,12 +67,23 @@ class RunnerManager:
 
             await self.message_creator.send_simple_message(f"Pulling from repository: '**{repo_name}**'.. [SUCCESS]\n"
                                                            f"Executing `docker compose up`.. [SUCCESS]", edit=True)
-        except discord.InteractionResponded:
-            pass
+        except python_on_whales.exceptions.DockerException as e:
+            logger.error("[ERROR]")
+            await self.message_creator.send_simple_message(f"Pulling from repository: '**{repo_name}**'.. [SUCCESS]\n"
+                                                           f"Executing `docker compose up`.. [ERROR]", edit=True)
+            await self.message_creator\
+                .send_exception(exception_message="Make sure the configuration is correct.\n\n"
+                                                  "If environment variables are needed "
+                                                  "(through .env files or other means), "
+                                                  "this bot can sadly not be used to deploy it because of discord's "
+                                                  "security practises. \n\nAfter manually deploying the container, "
+                                                  "it can be managed through this bot.",
+                                description="Could not execute `docker compose up`.",
+                                followup=True)
         finally:
             logger.info("[INFO] Cleaning up temp folder.")
             self.__change_folder_attributes(repo_path)
-            shutil.rmtree(f"temp/{temp_folder_name}")
+            shutil.rmtree(f"temp")
 
     def __change_folder_attributes(self, folder_path):
         try:
