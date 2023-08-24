@@ -85,6 +85,7 @@ class CommandExecutor:
     async def get_and_send_containers(self, filter_name: str = ""):
         containers = await self.get_containers_formatted(filter_name)
 
+        # If there are no containers, or the one container is this app.
         if len(containers) == 0 or (len(containers) == 1 and containers[0]["Name"] == APP_NAME):
             await self.message_creator.send_simple_message("There are currently no other containers found! Start one, "
                                                            "and run the command again.")
@@ -93,6 +94,7 @@ class CommandExecutor:
                 title="Containers",
                 description="To manage a specific container, use the container's name.",
                 items=containers,
+                items_per_page=3
             )
 
     async def restart_container(self, container_name: str):
@@ -199,12 +201,22 @@ class CommandExecutor:
             if container.status == "running":
                 runningFor = parseAndGetFormattedTimeDifference(container.attrs.get("State")["StartedAt"])
 
+            ports = []
+            try:
+                for k, v in container.attrs.get("HostConfig")["PortBindings"].items():
+                    ports.append(f"{v[0]['HostPort']}:{k.replace('/tcp', '')}")
+            except AttributeError:
+                pass
+            except KeyError:
+                pass
+
             containerInfo = {
                 "Name": container.name,
                 "Info": {
                     "Status": container.status,
                     "Started": container.attrs.get("State")["StartedAt"][:10],
-                    "Running for": runningFor
+                    "Running for": runningFor,
+                    "Ports": ", ".join(ports)
                 }
             }
 
@@ -221,7 +233,7 @@ class CommandExecutor:
             await self.message_creator.send_embed_with_object_info(
                 title=f"Could not find container with that name: `{container_name}`",
                 description="Did you mean one of these?",
-                items=containers
+                items=containers,
             )
         else:
             await self.message_creator.send_simple_message(f"Could not find specific or related containers with name: "
