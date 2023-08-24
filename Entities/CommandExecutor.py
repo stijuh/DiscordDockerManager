@@ -82,20 +82,20 @@ class CommandExecutor:
             items_per_page=5,
         )
 
-    async def get_and_send_containers(self, filter_name: str = ""):
-        containers = await self.get_containers_formatted(filter_name)
+    async def get_and_send_containers(self, filter_name: str = "", status: str = ""):
+        containers = await self.get_containers_formatted(filter_name, status)
 
-        # If there are no containers, or the one container is this app.
-        if len(containers) == 0 or (len(containers) == 1 and containers[0]["Name"] == APP_NAME):
+        if len(containers) == 0:
             await self.message_creator.send_simple_message("There are currently no other containers found! Start one, "
                                                            "and run the command again.")
-        else:
-            await self.message_creator.send_embed_with_object_info(
-                title="Containers",
-                description="To manage a specific container, use the container's name.",
-                items=containers,
-                items_per_page=3
-            )
+            return
+
+        await self.message_creator.send_embed_with_object_info(
+            title="Containers",
+            description="To manage a specific container, use the container's name.",
+            items=containers,
+            items_per_page=3
+        )
 
     async def restart_container(self, container_name: str):
         await self.__raise_if_manager(container_name)
@@ -189,10 +189,13 @@ class CommandExecutor:
     async def deploy_from_git(self, git_repo_url: str, docker_compose_name: str = ""):
         await self.runner.run_container_from_git(git_repo_url, compose_name=docker_compose_name)
 
-    async def get_containers_formatted(self, filter_name: str = ""):
-        containers = self.docker_client.containers.list(all=True)
-        containerInfoList = []
+    async def get_containers_formatted(self, filter_name: str = "", status: str = ""):
+        if status is "":
+            containers = self.docker_client.containers.list(all=True)
+        else:
+            containers = self.docker_client.containers.list(filters={"status": status})
 
+        containerInfoList = []
         for container in containers:
             if filter_name.lower() not in container.name.lower():
                 continue

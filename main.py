@@ -71,15 +71,15 @@ async def help(interaction: discord.Interaction):
 
 
 @discordClient.tree.command()
-@app_commands.rename(container_filter='container-name')
-@app_commands.describe(container_filter='Leave empty to get all containers')
-async def containers(interaction: discord.Interaction, container_filter: str = ""):
+@app_commands.rename(container_name='container-name')
+@app_commands.describe(container_name='Leave empty to get all containers')
+async def containers(interaction: discord.Interaction, container_name: str = "", status: str = ""):
     """Overview of all containers. Use the filter to look for specific containers."""
     check_if_allowed(interaction.user.id)
 
     logger.info("[INFO] Executing container overview command.")
     executor = CommandExecutor(dockerClient, interaction=interaction)
-    await executor.get_and_send_containers(container_filter)
+    await executor.get_and_send_containers(container_name, status)
 
     await update_container_amount()
 
@@ -210,23 +210,22 @@ async def runfromgit(interaction: discord.Interaction, git_repo_url: str,
 @stop.autocomplete('container_name')
 @remove.autocomplete('container_name')
 @rename.autocomplete('old_name')
-@containers.autocomplete('container_filter')
+@containers.autocomplete('container_name')
 @logs.autocomplete('container_name')
-async def containers_autocomplete(interaction: discord.Interaction, current: str) \
-        -> List[app_commands.Choice[str]]:
+async def containers_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
     executor = CommandExecutor(dockerClient, interaction=interaction)
     container_infos = await executor.get_containers_formatted()
     container_names = list(map(lambda container_info: container_info["Name"], container_infos))
 
     return [
         app_commands.Choice(name=container, value=container)
-        for container in container_names if current.lower() in container.lower()
+        for container in container_names
+        if current.lower() in container.lower()
     ]
 
 
 @remove_range.autocomplete('exclude')
-async def multiple_containers_autocomplete(interaction: discord.Interaction, current: str) \
-        -> List[app_commands.Choice[str]]:
+async def all_containers_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
     executor = CommandExecutor(dockerClient, interaction=interaction)
     container_infos = await executor.get_containers_formatted()
     container_names = list(map(lambda container_info: container_info["Name"], container_infos))
@@ -235,7 +234,17 @@ async def multiple_containers_autocomplete(interaction: discord.Interaction, cur
     return [
         app_commands.Choice(name=(container + ',' if current != '' else container) + current,
                             value=current + "," + container)
-        for container in container_names if container.lower() not in current.lower() or current == ""
+        for container in container_names
+        if container.lower() not in current.lower() or current == ""
+    ]
+
+
+@containers.autocomplete("status")
+async def containers_autocomplete(interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
+    return [
+        app_commands.Choice(name=status, value=status)
+        for status in ["running", "paused", "exited", "restarting"]
+        if current in status
     ]
 
 
