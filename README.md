@@ -9,9 +9,11 @@ ___
 
 The currently supported actions are:
 
-- Retrieving a list of all containers, running or not
-- Restarting containers by name or id
-- Stopping containers by name or id
+- Retrieving a list of all containers, optionally filtered by status and name
+- Stopping, (re)starting, renaming or removing containers by name or id
+- Retrieve logs of a container in txt format
+- Run an image from [Docker Hub](https://hub.docker.com/) with commands to execute
+- Run your own or publicly available code hosted on [Github](https://github.com/) as a container (cannot contain env variables, see [Limitations](#4-limitations).)
 - A help menu that basically says what I'm writing here
 
 ___
@@ -51,7 +53,16 @@ using a discord bot? Shhh. There is no better way. This is it.
 
 ___
 
-### Limitations
+## 4 Limitations
 
-Currently, this bot is only useful for managing _already existing_ containers. It might be expanded in the future to
-also be able to create new containers or update them.
+As of the time of writing (AUG 2023), this bot can be used to manage already existing containers, 
+pull images from dockerhub and from you own/public coding projects on github with a `docker-compose.yml` file.
+
+However, there is one big limitation. Because of Discord's security practises, users should not transmit any sensitive
+data like passwords, or _environment variables_. So, if your app needs environment variables to function, this bot cannot
+deploy it for you. You can of course still do this manually, and then manage the container through this bot.
+
+If Discord changes their security practises (End-to-End Encryption for example), then this might change. 
+
+___
+[2023 Studio Stoy](https://studiostoy.nl)

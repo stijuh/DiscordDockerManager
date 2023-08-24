@@ -2,6 +2,7 @@ import json
 import math
 
 import discord
+from discord import NotFound
 from discord.ui import View, Button
 
 from Common.contants import APP_VERSION
@@ -40,9 +41,12 @@ class Paginator:
         if len(self.pages) == 0 or len(items) % items_per_page != 0:
             self.pages.append(page)
 
-        await self.interaction.response.send_message(embed=self.pages[self.currentPage],
-                                                     view=self.getView(self.currentPage),
-                                                     ephemeral=True)
+        try:
+            await self.interaction.response.send_message(embed=self.pages[self.currentPage],
+                                                         view=self.getView(self.currentPage),
+                                                         ephemeral=True)
+        except NotFound:
+            pass
 
     def getView(self, pagePosition):
         buttons = [
