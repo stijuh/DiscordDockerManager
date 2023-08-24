@@ -2,7 +2,7 @@
 FROM python:3.10
 
 # Install the Docker client
-RUN apt-get update && apt-get install -y docker.io
+RUN apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 COPY . /dockermanager/src
 WORKDIR /dockermanager/src
